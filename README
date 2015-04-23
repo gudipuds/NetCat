@@ -1,0 +1,82 @@
+PROJECT 1: SOCKET PROGRAMMING: netcat_part
+
+************************
+
+Name: Sravya Gudipudi
+uname: sgudipud
+
+Name: Avinash Ravi
+uname: avinravi
+
+************************
+
+What's in the code?
+---------------------
+This application enables to transfer data over the network from an end system to a remote server and 
+has got two functions: a Client function and a Server function.
+
+The CLIENT function when executed opens a socket and establishes connection with the server. It then 
+reads the input from command line arguments( for the message mode) or from the file specified in the 
+command line and stores it in a buffer. The buffer is now divided  into chunks of 512 bytes, HMAC is 
+calculated for each chunk and appended  to the data in the front. Then we write this resulting chunk 
+of data to the socket. The format of data we write over the socket is HMAC Digest Length + HMAC Digest 
++ 512 Bytes of Data. Here, a delay is introduced while writing second chunk of data into the socket to 
+prevent the server from getting overloaded with the incoming data. Once the complete data is written 
+to socket, the socket connection is closed.
+
+The SERVER function opens a server connection and listens for incoming connections. When there is an 
+incoming connection from the client, server accepts the connection if it is idle or places the request 
+in a queue  if the server is busy. After a  connection is  established with  the client, it reads the 
+data from the socket. The HMAC message digest, digest length and the actual message are extracted from 
+the data received over the socket. HMAC digest is calculated for the incoming message and compared with 
+digest received over the socket. If both the message digests are equal, the message is written to the 
+output file. Once the complete message is received, the connection is closed.
+
+Tasks Accomplished
+---------------------
+-> Establishing a TCP connention and sending/receiving data over ther network.
+-> Reading data from the given file in Client and writing the received data to an output file at Server.
+-> Sending data as chunks of 512 bytes from Client to Server.
+-> At client, HMAC digest is calculated for each chunk of data and this digest along with the length of 
+   the digest is appended infront of the actual message.
+-> At Server, for each packet received, a new digest is calculated for the actual message and compared 
+   with the digest sent along with the data by the client.
+
+Compiling the Code
+---------------------
+The code is compiled as
+  gcc -lssl netcat_part.c
+The option -lssl specifies the compiler to link the 'ssl' library when compiling the code.
+
+The code compilation can be done using the Makefile as 
+  gmake all
+When compiling using gmake, the executable is stored in netcat_part.
+
+Execution and Interpretation of Output
+---------------------------------------
+SERVER can be started as
+   ./netcat_part -l localhost <OutputFileName>
+   Eg: ./netcat_part -l localhost result.txt
+
+   Port number is an optional attribute and can be set using argument -p. The last argument is the output 
+name, which can be specified by the user.
+
+CLIENT can establish a connection to the server as - 
+  For input to be read from command line argument
+     ./netcat_part.c -m <Message> <ServerAddress>
+	 Eg: ./netcat_part.c -m "Hello World" 127.0.0.1
+  
+  To transfer a file/ part of a file to server
+     ./netcat_part.c <ServerAddress> <InputFileName>
+	 Eg: ./netcat_part.c 127.0.0.1 alphabet.txt
+
+A part of file can be sent by using -n, -o commands. -n specifies the number of bytes from the file to 
+be sent to the server. -o sepcifies the offset from which the data is to be read to send to server.
+  Eg: ./netcat_part.c -n 3 -o 3 127.0.0.1 alphabet.txt
+The above example states that 3 bytes of data should be read from the input file starting from offset 3.
+
+-v can be used in Client or Server to run them in the verbose mode.
+
+The data sent to the server is written to the output file specified while starting the server.
+
+Note: As per current implementation, server has to be started for every request from a new client.
